@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: task-api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: task-api
+  template:
+    metadata:
+      labels:
+        app: task-api
+    spec:
+      serviceAccountName: task-api-account # We will create this next
+      containers:
+        - name: task-api
+          image: task-api-app
+          imagePullPolicy: IfNotPresent # Tells K8s to use the local image
+          ports:
+            - containerPort: 8081
+          env:
+            - name: MONGO_URI
+              value: "mongodb://mongo-service:27017/test" # Connects to the Mongo service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: task-api-service
+spec:
+  type: NodePort # This exposes the service outside the cluster
+  selector:
+    app: task-api
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+      nodePort: 30001 # We will access our app at http://localhost:30001
